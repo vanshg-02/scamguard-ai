@@ -1,8 +1,14 @@
 import streamlit as st
 from PIL import Image
 
-from database.supabase_client import sign_up, sign_in, save_scan
-from database.supabase_client import sign_up, sign_in
+from database.supabase_client import (
+    sign_up,
+    sign_in,
+    save_scan,
+    get_scan_history
+)
+from services.legal_info import get_reporting_info
+from services.recommendations import get_recommendations
 from services.ocr import extract_text_from_image
 from ml.predict import predict_scam
 from services.risk_engine import calculate_risk
@@ -23,7 +29,7 @@ if "user" not in st.session_state:
     st.session_state.user = None
 
 with st.sidebar:
-    st.subheader("👤 Account")
+    st.subheader("  Account")
 
     auth_mode = st.radio(
         "Choose",
@@ -71,7 +77,7 @@ with st.sidebar:
                     response = sign_in(email, password)
                     st.session_state.user = response.user
                     st.session_state.access_token = response.session.access_token
-                    st.success("Login successful! 🎉")
+                    st.success("Login successful!")
                 except Exception as e:
                         st.error(str(e))
 
@@ -88,6 +94,18 @@ with st.sidebar:
 if "history" not in st.session_state:
     st.session_state.history = []
 
+
+if st.session_state.user and st.session_state.access_token:
+    try:
+        db_history = get_scan_history(
+            st.session_state.user.id,
+            st.session_state.access_token
+        )
+
+        st.session_state.history = db_history
+
+    except Exception as e:
+        st.error(f"Could not load scan history: {e}")
 
 # -----------------------------
 # Functions
@@ -132,6 +150,33 @@ def show_report(final_result, scam_type, url_results):
             "Scam Type",
             scam_type
         )
+    st.subheader("🛡️ Recommended Actions")
+
+    recommendations = get_recommendations(
+        final_result["risk_level"],
+        scam_type
+    )
+
+    for recommendation in recommendations:
+        st.write("• " + recommendation)
+    st.subheader("🚨 Take Action")
+
+    reporting_info = get_reporting_info()
+
+    st.write(
+        "If you believe you have encountered a scam, "
+        "you can report it through the official channels."
+    )
+
+    st.link_button(
+        "🇮🇳 Report Cyber Crime",
+        reporting_info["cybercrime_portal"]
+    )
+
+    st.info(
+        "💰 If you have already lost money in a financial cyber fraud, "
+        "call 1930 immediately."
+    )
 
     if final_result["reasons"]:
 
@@ -162,10 +207,7 @@ def show_report(final_result, scam_type, url_results):
                     "No obvious URL red flags detected"
                 )
 
-    st.info(
-        "⚠️ This is an AI-based risk assessment, "
-        "not proof of fraud."
-    )
+    
 
 
 # -----------------------------
@@ -174,9 +216,9 @@ def show_report(final_result, scam_type, url_results):
 
 with st.sidebar:
 
-    st.title("🛡️ ScamGuard AI")
+    
 
-    st.subheader("📜 Scan History")
+    st.subheader("  Scan History")
 
     if not st.session_state.history:
 
@@ -339,7 +381,7 @@ if st.button(
             st.session_state.access_token
             
         )
-                st.success("Scan saved to Supabase ✅")
+                st.success("Scan saved to Supabase")
             except Exception as e:
                 st.error(f"Supabase save error: {e}")
 

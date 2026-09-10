@@ -68,3 +68,31 @@ def sign_in(email, password):
         "email": email,
         "password": password
     })
+def get_scan_history(user_id, access_token):
+    url = f"{SUPABASE_URL}/rest/v1/scan_history"
+
+    headers = {
+        "apikey": SUPABASE_KEY,
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json"
+    }
+
+    params = {
+        "user_id": f"eq.{user_id}",
+        "select": "id,message,risk_score,risk_level,scam_type,reasons,created_at",
+        "order": "created_at.desc"
+    }
+
+    response = httpx.get(
+        url,
+        headers=headers,
+        params=params
+    )
+
+    if response.status_code >= 400:
+        raise Exception(
+            f"Supabase error {response.status_code}: "
+            f"{response.text}"
+        )
+
+    return response.json()
