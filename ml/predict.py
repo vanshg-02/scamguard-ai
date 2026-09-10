@@ -40,30 +40,35 @@ if __name__ == "__main__":
 
     result = predict_scam(message)
 
-final_result = calculate_risk(
-    message,
-    result["risk_score"]
-)
-scam_type = classify_scam_type(message)
-url_results = analyze_urls(message)
-print("\nResult")
-print("------")
-print(f"Risk Score: {final_result['risk_score']}%")
-print(f"Risk Level: {final_result['risk_level']}")
-print(f"Scam Type: {scam_type}")
-if final_result["reasons"]:
-    print("\nWhy flagged:")
-    for reason in final_result["reasons"]:
-        print(f"- {reason}")
-if url_results:
-    print("\nURL Analysis:")
-    for url_info in url_results:
-        print(f"URL: {url_info['url']}")
-        print(f"Domain: {url_info['domain']}")
+    final_result = calculate_risk(
+        message,
+        result["risk_score"]
+    )
 
-        if url_info["suspicious"]:
-            print("Status: Suspicious")
-            for reason in url_info["reasons"]:
-                print(f"- {reason}")
-        else:
-            print("Status: No obvious URL red flags")
+    scam_type = classify_scam_type(message)
+
+    url_results = analyze_urls(message)
+
+    print("\nResult")
+    print("------")
+    print(f"Risk Score: {final_result['risk_score']}%")
+    print(f"Risk Level: {final_result['risk_level']}")
+    print(f"Scam Type: {scam_type}")
+
+    if final_result["reasons"]:
+        print("\nWhy flagged:")
+        for reason in final_result["reasons"]:
+            print(f"- {reason}")
+
+    if url_results:
+        print("\nURL Analysis:")
+        for url_info in url_results:
+            print(f"URL: {url_info['url']}")
+            print(f"Domain: {url_info['domain']}")
+
+            if url_info["suspicious"]:
+                print("Status: Suspicious")
+                for reason in url_info["reasons"]:
+                    print(f"- {reason}")
+            else:
+                print("Status: No obvious URL red flags detected")
